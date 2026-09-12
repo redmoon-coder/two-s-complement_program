@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign-Magnitude vs Two's Complement Explorer</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#121c31;
+      --panel2:#0f1830;
+      --text:#e8eefc;
+      --muted:#a8b3d6;
+      --accent:#6ea8fe;
+      --accent2:#7cf7c2;
+      --warn:#ffcf5a;
+      --bad:#ff6b6b;
+      --good:#49e58b;
+      --line:rgba(255,255,255,.08);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(110,168,254,.25), transparent 60%),
+                  radial-gradient(1000px 600px at 100% 0%, rgba(124,247,194,.18), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    header{
+      padding:24px 16px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+      position: sticky;
+      top:0;
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+    .wrap{max-width:1100px;margin:0 auto;}
+    h1{
+      margin:0;
+      font-size:1.35rem;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .sub{margin-top:8px;color:var(--muted);font-size:.95rem;line-height:1.35;}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:14px;
+      padding:14px;
+      align-items:start;
+    }
+    @media (max-width: 950px){
+      .grid{grid-template-columns: 1fr; }
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:14px;
+      box-shadow: var(--shadow);
+      padding:14px;
+    }
+    .card h2{
+      margin:0 0 10px 0;
+      font-size:1.05rem;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:.9rem;
+      margin-bottom:8px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 600px){ .row{grid-template-columns:1fr;} }
+    label{
+      display:block;
+      color:var(--muted);
+      font-size:.9rem;
+      margin:0 0 6px 2px;
+    }
+    input, select, button, textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.15);
+      color:var(--text);
+      outline:none;
+      font-family: var(--sans);
+    }
+    textarea{resize:vertical; min-height:70px;}
+    input::placeholder{color: rgba(232,238,252,.35);}
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    button{
+      cursor:pointer;
+      border:1px solid rgba(110,168,254,.35);
+      background: rgba(110,168,254,.12);
+      color: var(--text);
+      font-weight:700;
+      transition: transform .05s ease;
+    }
+    button:hover{transform: translateY(-1px);}
+    button.secondary{
+      border-color: rgba(124,247,194,.35);
+      background: rgba(124,247,194,.10);
+    }
+    button.ghost{
+      border-color: rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-weight:600;
+    }
+    .mono{
+      font-family: var(--mono);
+      font-size: .95rem;
+    }
+    .out{
+      border-top:1px solid var(--line);
+      margin-top:12px;
+      padding-top:12px;
+    }
+    .small{
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.35;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap:8px 12px;
+      align-items:start;
+      margin:8px 0;
+    }
+    .k{color:var(--muted)}
+    .v{font-weight:650}
+    .bitbox{
+      padding:10px;
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:12px;
+      background: rgba(0,0,0,.12);
+    }
+    .bits{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+    .bit{
+      width:26px; height:26px;
+      display:flex; align-items:center; justify-content:center;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+      font-family:var(--mono);
+      font-weight:800;
+    }
+    .bit.sign{
+      background: rgba(110,168,254,.14);
+      border-color: rgba(110,168,254,.35);
+    }
+    .bit.warn{
+      background: rgba(255,207,90,.14);
+      border-color: rgba(255,207,90,.35);
+    }
+    .bit.good{
+      background: rgba(73,229,139,.14);
+      border-color: rgba(73,229,139,.35);
+    }
+    .steps{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    details{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
+      background: rgba(0,0,0,.12);
+    }
+    summary{
+      cursor:pointer;
+      font-weight:800;
+      color:var(--text);
+    }
+    .step{
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+    }
+    .step h3{
+      margin:0 0 6px 0;
+      font-size:1rem;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .step p{margin:6px 0; color:var(--muted); line-height:1.4;}
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:8px;
+      font-family:var(--mono);
+      font-size:.92rem;
+    }
+    .table th,.table td{
+      border:1px solid rgba(255,255,255,.10);
+      padding:8px;
+      text-align:center;
+    }
+    .table th{
+      color:var(--muted);
+      font-weight:900;
+      background: rgba(255,255,255,.03);
+    }
+    footer{
+      padding:18px 16px 28px;
+      color:var(--muted);
+      text-align:center;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:.85rem;
+      margin-right:8px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>🧮 Two’s Complement vs Sign-Magnitude Explorer</h1>
+    <div class="sub">
+      Designed for 16-year-old CS students: try different values and bit widths, then follow the <b>step-by-step</b>
+      addition/subtraction workflow in <b>two’s complement</b>.
+    </div>
+  </div>
+</header>
+
+<div class="grid wrap">
+  <!-- LEFT: Inputs & summary -->
+  <section class="card">
+    <h2>🎛️ Inputs</h2>
+
+    <div class="row">
+      <div>
+        <label for="bitWidth">Bit width (n)</label>
+        <select id="bitWidth">
+          <option value="4">4 bits (small & easy)</option>
+          <option value="5">5 bits</option>
+          <option value="8" selected>8 bits (classic)</option>
+          <option value="10">10 bits</option>
+          <option value="12">12 bits</option>
+        </select>
+      </div>
+      <div>
+        <label for="operation">Operation</label>
+        <select id="operation">
+          <option value="add" selected> A + B </option>
+          <option value="sub"> A - B </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <label for="A">A (decimal)</label>
+        <input id="A" type="number" value="-3" step="1" />
+        <div class="small" id="hintA"> </div>
+      </div>
+      <div>
+        <label for="B">B (decimal)</label>
+        <input id="B" type="number" value="2" step="1" />
+        <div class="small" id="hintB"> </div>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button id="btnCompute">✨ Compute</button>
+      <button class="secondary" id="btnExample">📌 Load Example (A=-3, B=2)</button>
+      <button class="ghost" id="btnRandom">🎲 Random values</button>
+    </div>
+
+    <div class="out">
+      <div class="pill">📍 Reminder: Two’s Complement avoids separate add/sub rules.</div>
+
+      <div class="kv">
+        <div class="k">Range in two’s complement:</div>
+        <div class="v" id="rangeTC"></div>
+      </div>
+      <div class="kv">
+        <div class="k">Range in sign-magnitude:</div>
+        <div class="v" id="rangeSM"></div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--line);margin:12px 0;"/>
+
+      <h2>🔎 Representation</h2>
+
+      <div class="row">
+        <div>
+          <div class="tag">🟦 Sign-Magnitude</div>
+          <div class="bitbox">
+            <div class="small">A in sign-magnitude:</div>
+            <div class="mono" id="A_SM_str"></div>
+            <div class="bits" id="A_SM_bits"></div>
+          </div>
+
+          <div class="bitbox" style="margin-top:10px;">
+            <div class="small">B in sign-magnitude:</div>
+            <div class="mono" id="B_SM_str"></div>
+            <div class="bits" id="B_SM_bits"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="tag">🟩 Two’s Complement</div>
+          <div class="bitbox">
+            <div class="small">A in two’s complement:</div>
+            <div class="mono" id="A_TC_str"></div>
+            <div class="bits" id="A_TC_bits"></div>
+          </div>
+
+          <div class="bitbox" style="margin-top:10px;">
+            <div class="small">B in two’s complement:</div>
+            <div class="mono" id="B_TC_str"></div>
+            <div class="bits" id="B_TC_bits"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="out">
+        <h2>🧾 Result (computed)</h2>
+        <div class="kv">
+          <div class="k">Operation:</div>
+          <div class="v" id="opLabel"></div>
+        </div>
+        <div class="kv">
+          <div class="k">Decimal expected (A ± B):</div>
+          <div class="v mono" id="decExpected"></div>
+        </div>
+        <div class="kv">
+          <div class="k">Two’s Complement stored result:</div>
+          <div class="v mono" id="result_TC_str"></div>
+        </div>
+        <div class="kv">
+          <div class="k">Interpreted decimal from stored bits:</div>
+          <div class="v mono" id="result_TC_dec"></div>
+        </div>
+        <div class="kv">
+          <div class="k">Overflow?</div>
+          <div class="v" id="overflowLabel"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RIGHT: Step-by-step addition/subtraction -->
+  <section class="card">
+    <h2>🧠 Step-by-Step (Two’s Complement Addition/Subtraction)</h2>
+    <div class="small">
+      <b>Subtraction:</b> use <b>A − B = A + (−B)</b>.  
+      In binary: <b>−B</b> = invert bits + add 1.
+    </div>
+
+    <div class="steps">
+      <details open>
+        <summary>Step 1: Convert inputs to two’s complement</summary>
+        <div id="step1"></div>
+      </details>
+
+      <details open>
+        <summary id="step2Title">Step 2: Prepare operation (add or subtract)</summary>
+        <div id="step2"></div>
+      </details>
+
+      <details open>
+        <summary>Step 3: Binary addition with carries</summary>
+        <div id="step3"></div>
+      </details>
+
+      <details open>
+        <summary>Step 4: Interpret result + check overflow</summary>
+        <div id="step4"></div>
+      </details>
+    </div>
+  </section>
+</div>
+
+<footer>
+  Built as a single-file interactive learning tool 📚.  
+  Tip: Try small bit widths (like 4) to see overflow clearly.
+</footer>
+
+<script>
+  // ---------- Helpers ----------
+  const $ = (id) => document.getElementById(id);
+
+  function maskForBits(n){ return (1n<<BigInt(n)) - 1n; }
+
+  // Convert a signed integer (number) to sign-magnitude bitstring length n
+  function toSignMagnitude(x, n){
+    let big = BigInt(x);
+    const maxMag = (1n << BigInt(n-1)) - 1n;
+    let overflow = false;
+    let mag = big < 0n ? -big : big;
+
+    if (mag > maxMag){ overflow = true; mag = mag % (maxMag+1n); }
+
+    const signBit = big < 0n ? 1 : 0;
+    let magBits = mag.toString(2).padStart(n-1, '0');
+    const bits = String(signBit) + magBits;
+    return { bits, signBit, magBits, overflow };
+  }
+
+  // Two's complement: return bitstring for x in n bits (mod 2^n)
+  function toTwosComplementBits(x, n){
+    const mod = 1n << BigInt(n);
+    let big = BigInt(x);
+    let stored = ((big % mod) + mod) % mod; // wrap
+    const bits = stored.toString(2).padStart(n, '0');
+    return { bits, stored };
+  }
+
+  // Interpret two's complement bits to signed integer
+  function fromTwosComplement(bits){
+    const n = bits.length;
+    const val = BigInt('0b' + bits);
+    const sign = (val >> BigInt(n-1)) & 1n;
+    if (sign === 0n) return val;
+    // negative: val - 2^n
+    return val - (1n<<BigInt(n));
+  }
+
+  function fromBitsToBigInt(bits){
+    return BigInt('0b'+bits);
+  }
+
+  // Build visual bit boxes
+  function renderBits(containerId, bits, highlightIndex=null){
+    const el = $(containerId);
+    el.innerHTML = '';
+    for(let i=0;i<bits.length;i++){
+      const b = bits[i];
+      const div = document.createElement('div');
+      div.className = 'bit';
+      if(i===0) div.classList.add('sign'); // MSB is sign bit
+      if(highlightIndex!==null && i===highlightIndex){
+        if(b==='1') div.classList.add('good');
+        else div.classList.add('warn');
+      }
+      div.textContent = b;
+      el.appendChild(div);
+    }
+  }
+
+  // Perform addition of two n-bit numbers in two's complement (unsigned addition on stored bits)
+  function addNbits(aBits, bBits){
+    const n = aBits.length;
+    const a = fromBitsToBigInt(aBits);
+    const b = fromBitsToBigInt(bBits);
+    const sum = a + b;
+    const mod = 1n<<BigInt(n);
+    const stored = sum % mod;
+
+    // carry table for step display (bit by bit, from LSB to MSB)
+    let carries = []; // carries[i] is carry into bit i (0=LSB)
+    let carry = 0n;
+    const aStr = aBits.split('').reverse();
+    const bStr = bBits.split('').reverse();
+    for(let i=0;i<n;i++){
+      const ai = aStr[i]==='1'?1n:0n;
+      const bi = bStr[i]==='1'?1n:0n;
+      const total = ai + bi + carry;
+      carries.push(carry);
+      carry = (total >= 2n) ? 1n : 0n;
+    }
+    // final carry out is carry
+    const finalCarryOut = carry;
+    return {
+      storedBits: stored.toString(2).padStart(n,'0'),
+      sumUnsigned: sum,
+      finalCarryOut,
+      carries // carry into each bit index from LSB
+    };
+  }
+
+  // Check overflow for two's complement addition: if sign of operands same and sign of result differs
+  function overflowForAdd(aBits, bBits, resultBits){
+    const aSign = aBits[0], bSign = bBits[0], rSign = resultBits[0];
+    if(aSign === bSign && rSign !== aSign) return true;
+    return false;
+  }
+
+  // Two's complement negation: invert bits + 1
+  function twosComplementNegate(bits){
+    const inv = bits.split('').map(x => x==='1'?'0':'1').join('');
+    // add 1
+    const one = '0'.repeat(bits.length-1)+'1';
+    const add = addNbits(inv, one);
+    return { negBits: add.storedBits, invBits: inv, addOneResult: add };
+  }
+
+  function setHints(val, idHint){
+    const n = parseInt($('bitWidth').value,10);
+    const big = BigInt(val);
+    const minTC = -(1n << BigInt(n-1));
+    const maxTC = (1n << BigInt(n-1)) - 1n;
+
+    const inRange = (big >= minTC && big <= maxTC);
+    $(idHint).textContent = inRange
+      ? `✅ In two’s complement ${n}-bit range`
+      : `⚠️ Out of range for ${n}-bit two’s complement (will wrap in stored bits)`;
+  }
+
+  // ---------- Step rendering ----------
+  function renderStep1({A, B, n, A_tc_bits, B_tc_bits, A_overflow, B_overflow}){
+    return `
+      <div class="step">
+        <h3>1) Convert to two’s complement (${n} bits) ✍️</h3>
+        <p>For two’s complement, we store the value modulo <span class="mono">2^${n}</span>.</p>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Value</th>
+                <th>Decimal</th>
+                <th>Stored bits (two’s complement)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">A</td>
+                <td class="mono">${A}</td>
+                <td class="mono">${A_tc_bits}</td>
+              </tr>
+              <tr>
+                <td class="mono">B</td>
+                <td class="mono">${B}</td>
+                <td class="mono">${B_tc_bits}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">
+          ${A_overflow ? '⚠️ A is out of range → it wraps in stored bits.' : '✅ A fits in range.'}
+          <br/>
+          ${B_overflow ? '⚠️ B is out of range → it wraps in stored bits.' : '✅ B fits in range.'}
+        </p>
+      </div>
+    `;
+  }
+
+  function renderStep2({op, A_tc_bits, B_tc_bits, n, B_neg}) {
+    if(op==='add'){
+      return `
+        <div class="step">
+          <h3>2) Prepare addition ➕</h3>
+          <p>We compute: <b>A + B</b></p>
+          <p class="small mono">A: ${A_tc_bits}</p>
+          <p class="small mono">B: ${B_tc_bits}</p>
+          <p class="small">Next: add the stored bit patterns like normal binary addition.</p>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="step">
+          <h3>2) Prepare subtraction ➖ using two’s complement trick 🧩</h3>
+          <p>We compute: <b>A − B = A + (−B)</b></p>
+
+          <p><b>Step 2a: Find −B</b></p>
+          <p class="small mono">B: ${B_tc_bits}</p>
+
+          <p><b>Step 2b: Invert bits</b> (flip 0 ↔ 1)</p>
+          <p class="small mono">~B: ${B_neg.invBits}</p>
+
+          <p><b>Step 2c: Add 1</b></p>
+          <p class="small mono">(~B) + 1 = −B bits: ${B_neg.negBits}</p>
+
+          <p><b>Now add</b></p>
+          <p class="small mono">A + (−B) = ${A_tc_bits} + ${B_neg.negBits}</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderStep3({op, n, A_tc_bits, B_tc_bits, B_neg, resultAdd}){
+    const bToUse = (op==='add') ? B_tc_bits : B_neg.negBits;
+
+    // Build carry table (from LSB to MSB, show carry into each column)
+    // We'll reconstruct per-bit totals for display.
+    const aRev = A_tc_bits.split('').reverse();
+    const bRev = bToUse.split('').reverse();
+
+    let carry = 0n;
+    let rows = [];
+    for(let i=0;i<n;i++){
+      const ai = aRev[i]==='1'?1n:0n;
+      const bi = bRev[i]==='1'?1n:0n;
+      const total = ai + bi + carry;
+      const sumBit = total % 2n;
+      const nextCarry = total >= 2n ? 1n : 0n;
+
+      rows.push({
+        bitIndexFromLSB: i,
+        ai: ai.toString(),
+        bi: bi.toString(),
+        carryIn: carry.toString(),
+        sum: sumBit.toString(),
+        carryOut: nextCarry.toString()
+      });
+      carry = nextCarry;
+    }
+
+    // Create HTML table MSB->LSB for readability
+    rows.reverse();
+    return `
+      <div class="step">
+        <h3>3) Binary addition with carries 🧾</h3>
+        <p class="small">We add the stored bits using normal binary addition (ignoring overflow until the end).</p>
+
+        ${op==='sub'
+          ? `<p class="small mono"><b>Because subtraction:</b> we used −B instead of B.</p>
+             <p class="small mono">Using A + (−B): <br/>${A_tc_bits} + ${bToUse}</p>`
+          : `<p class="small mono">Using A + B: <br/>${A_tc_bits} + ${bToUse}</p>`
+        }
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Bit position</th>
+              <th>A</th>
+              <th>B (or −B)</th>
+              <th>Carry in</th>
+              <th>Sum bit</th>
+              <th>Carry out</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r=>{
+              // convert displayed position: if we reversed, bit index from LSB becomes (n-1 - shown?)
+              // r.bitIndexFromLSB is original LSB index; display position as that.
+              const pos = r.bitIndexFromLSB;
+              return `
+                <tr>
+                  <td class="mono">${pos}</td>
+                  <td class="mono">${r.ai}</td>
+                  <td class="mono">${r.bi}</td>
+                  <td class="mono">${r.carryIn}</td>
+                  <td class="mono">${r.sum}</td>
+                  <td class="mono">${r.carryOut}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <p class="small">
+          Final stored bits (mod <span class="mono">2^${n}</span>): <span class="mono">${resultAdd.storedBits}</span>
+          <br/>
+          Final carry out (extra bit): <span class="mono">${resultAdd.finalCarryOut.toString()}</span>
+        </p>
+      </div>
+    `;
+  }
+
+  function renderStep4({op, A_tc_bits, bUsedBits, resultBits, resultDec, overflow}){
+    return `
+      <div class="step">
+        <h3>4) Interpret result & check overflow ✅⚠️</h3>
+        <p class="small"><b>Stored result bits:</b> <span class="mono">${resultBits}</span></p>
+        <p class="small"><b>Interpretation (two’s complement):</b> <span class="mono">${resultDec.toString()}</span></p>
+
+        <p class="small">
+          <b>Overflow rule (two’s complement addition):</b>
+          <br/>
+          Overflow happens if:
+          <ul>
+            <li>sign(A) == sign(B used)</li>
+            <li>but sign(result) != sign(A)</li>
+          </ul>
+        </p>
+
+        <p class="small">
+          Using signs:
+          <br/>
+          sign(A): <span class="mono">${A_tc_bits[0]}</span>,
+          sign(B used): <span class="mono">${bUsedBits[0]}</span>,
+          sign(result): <span class="mono">${resultBits[0]}</span>.
+        </p>
+
+        <p style="margin-top:8px;font-weight:900;color:${overflow ? 'var(--warn)' : 'var(--good)'};">
+          ${overflow ? '⚠️ Overflow occurred (value can’t be represented in n bits reliably).' : '✅ No overflow.'}
+        </p>
+      </div>
+    `;
+  }
+
+  // ---------- Main compute ----------
+  function compute(){
+    const n = parseInt($('bitWidth').value,10);
+    const op = $('operation').value;
+    const A = Number($('A').value);
+    const B = Number($('B').value);
+
+    // Range checks
+    const minTC = -(1n << BigInt(n-1));
+    const maxTC = (1n << BigInt(n-1)) - 1n;
+
+    const A_big = BigInt(A), B_big = BigInt(B);
+    const A_tc_over = !(A_big >= minTC && A_big <= maxTC);
+    const B_tc_over = !(B_big >= minTC && B_big <= maxTC);
+
+    // Sign-magnitude
+    const A_sm = toSignMagnitude(A, n);
+    const B_sm = toSignMagnitude(B, n);
+
+    // Two's complement stored bits
+    const A_tc = toTwosComplementBits(A, n);
+    const B_tc = toTwosComplementBits(B, n);
+
+    // Prepare operation in two's complement
+    let resultAdd, resultBits, overflow=false, bUsedBits;
+    let B_neg = null;
+    if(op==='add'){
+      bUsedBits = B_tc.bits;
+      resultAdd = addNbits(A_tc.bits, bUsedBits);
+      resultBits = resultAdd.storedBits;
+      overflow = overflowForAdd(A_tc.bits, bUsedBits, resultBits);
+    } else {
+      B_neg = twosComplementNegate(B_tc.bits);
+      bUsedBits = B_neg.negBits;
+      resultAdd = addNbits(A_tc.bits, bUsedBits);
+      resultBits = resultAdd.storedBits;
+      overflow = overflowForAdd(A_tc.bits, bUsedBits, resultBits);
+    }
+
+    const resultDec = fromTwosComplement(resultBits);
+
+    // Update top UI
+    $('rangeTC').textContent = `Min ${minTC.toString()} , Max ${maxTC.toString()} (for ${n} bits)`;
+    const maxMag = (1n<<BigInt(n-1)) - 1n;
+    $('rangeSM').textContent = `Sign-Magnitude: ${(-maxMag).toString()} to ${maxMag.toString()} (but has +0 and -0)`;
+
+    $('opLabel').textContent = op==='add' ? `A + B` : `A − B`;
+    $('decExpected').textContent = (op==='add' ? (A+B) : (A-B)).toString();
+    $('result_TC_str').textContent = resultBits;
+    $('result_TC_dec').textContent = resultDec.toString();
+    $('overflowLabel').textContent = overflow ? '⚠️ Yes' : '✅ No';
+    $('overflowLabel').style.color = overflow ? 'var(--warn)' : 'var(--good)';
+
+    // Render representations
+    $('A_SM_str').textContent = A_sm.bits;
+    $('B_SM_str').textContent = B_sm.bits;
+    $('A_TC_str').textContent = A_tc.bits;
+    $('B_TC_str').textContent = B_tc.bits;
+
+    renderBits('A_SM_bits', A_sm.bits);
+    renderBits('B_SM_bits', B_sm.bits);
+    renderBits('A_TC_bits', A_tc.bits);
+    renderBits('B_TC_bits', B_tc.bits);
+
+    // Step sections
+    $('step1').innerHTML = renderStep1({
+      A, B, n,
+      A_tc_bits: A_tc.bits,
+      B_tc_bits: B_tc.bits,
+      A_overflow: A_tc_over,
+      B_overflow: B_tc_over
+    });
+
+    $('step2Title').textContent = op==='add'
+      ? 'Step 2: Prepare operation (add or subtract)'
+      : 'Step 2: Prepare subtraction (A − B via + (−B))';
+
+    $('step2').innerHTML = renderStep2({
+      op, A_tc_bits: A_tc.bits, B_tc_bits: B_tc.bits, n, B_neg
+    });
+
+    $('step3').innerHTML = renderStep3({
+      op, n,
+      A_tc_bits: A_tc.bits,
+      B_tc_bits: B_tc.bits,
+      B_neg,
+      resultAdd
+    });
+
+    $('step4').innerHTML = renderStep4({
+      op,
+      A_tc_bits: A_tc.bits,
+      bUsedBits,
+      resultBits,
+      resultDec,
+      overflow
+    });
+
+    // Update hints
+    setHints(A, 'hintA');
+    setHints(B, 'hintB');
+  }
+
+  // ---------- Events ----------
+  $('btnCompute').addEventListener('click', compute);
+
+  $('btnExample').addEventListener('click', ()=>{
+    $('A').value = -3;
+    $('B').value = 2;
+    $('operation').value = 'sub'; // show subtraction workflow clearly for the example
+    compute();
+  });
+
+  $('btnRandom').addEventListener('click', ()=>{
+    const n = parseInt($('bitWidth').value,10);
+    const minTC = Number(-(1n << BigInt(n-1)));
+    const maxTC = Number((1n << BigInt(n-1)) - 1n);
+    const randInt = (min,max)=> Math.floor(Math.random()*(max-min+1))+min;
+    $('A').value = randInt(minTC, maxTC);
+    $('B').value = randInt(minTC, maxTC);
+    compute();
+  });
+
+  $('bitWidth').addEventListener('change', compute);
+  $('operation').addEventListener('change', compute);
+  $('A').addEventListener('input', ()=>{ setHints($('A').value, 'hintA'); });
+  $('B').addEventListener('input', ()=>{ setHints($('B').value, 'hintB'); });
+
+  // Initial
+  compute();
+</script>
+</body>
+</html>
