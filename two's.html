@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Representation & Two's Complement Explorer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .bit-box {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bit-box:hover {
+            transform: translateY(-2px);
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-mono font-bold text-xl shadow-md shadow-indigo-200">
+                        01
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight">Binary Explorer</h1>
+                        <p class="text-xs text-slate-500 font-medium">Signed Integers & Two's Complement Arithmetic</p>
+                    </div>
+                </div>
+                
+                <!-- Navigation Tabs -->
+                <nav class="flex space-x-1 sm:space-x-2 bg-slate-100 p-1.5 rounded-xl text-sm font-medium">
+                    <button onclick="switchTab('converter')" id="tab-converter" class="tab-btn px-3 py-1.5 rounded-lg text-indigo-700 bg-white shadow-sm font-semibold transition-all">
+                        <i class="fa-solid fa-right-left mr-1.5"></i>Representation
+                    </button>
+                    <button onclick="switchTab('arithmetic')" id="tab-arithmetic" class="tab-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                        <i class="fa-solid fa-calculator mr-1.5"></i>Addition & Subtraction
+                    </button>
+                    <button onclick="switchTab('quiz')" id="tab-quiz" class="tab-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                        <i class="fa-solid fa-graduation-cap mr-1.5"></i>Practice Quiz
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- TAB 1: REPRESENTATION & CONVERTER -->
+        <div id="section-converter" class="space-y-8">
+            <!-- Hero / Explanation Banner -->
+            <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="max-w-3xl">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 mb-3">
+                        <i class="fa-solid fa-lightbulb"></i> Computer Science Core Topic
+                    </span>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-3">Sign-Magnitude vs. Two's Complement</h2>
+                    <p class="text-slate-600 leading-relaxed mb-4">
+                        In binary systems, positive numbers are easy! But how do computers store negative numbers? 
+                        <strong>Sign-Magnitude</strong> simply uses the first bit as a negative flag (+/-), while 
+                        <strong>Two's Complement</strong> makes arithmetic effortless in hardware by turning subtraction into simple binary addition.
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
+                        <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
+                            <h4 class="font-semibold flex items-center gap-2 mb-1">
+                                <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Sign-Magnitude Problem
+                            </h4>
+                            <p class="text-xs text-amber-800">Has two representations for zero: <code class="bg-amber-100 px-1 rounded">00000000</code> (+0) and <code class="bg-amber-100 px-1 rounded">10000000</code> (-0). Standard binary addition fails with standard logic circuits!</p>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900">
+                            <h4 class="font-semibold flex items-center gap-2 mb-1">
+                                <i class="fa-solid fa-circle-check text-emerald-600"></i> Why Two's Complement Wins
+                            </h4>
+                            <p class="text-xs text-emerald-800">Only one zero (<code class="bg-emerald-100 px-1 rounded">00000000</code>), allows natural hardware addition for both positive & negative integers, and gives an extra negative value range (-128 to +127).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Converter Container -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Left Input Controls -->
+                <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-indigo-600"></i> Interactive 8-Bit Converter
+                        </h3>
+                        <label for="integerInput" class="block text-sm font-semibold text-slate-700 mb-2">
+                            Enter an Integer (-128 to 127):
+                        </label>
+                        <div class="flex items-center gap-3 mb-6">
+                            <input type="number" id="integerInput" value="-5" min="-128" max="127" 
+                                class="w-full px-4 py-3 rounded-xl border border-slate-300 font-mono text-xl text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                            <button onclick="randomizeInput()" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors" title="Random Number">
+                                <i class="fa-solid fa-dice"></i>
+                            </button>
+                        </div>
+
+                        <!-- Quick Value Buttons -->
+                        <div class="space-y-2">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Presets</span>
+                            <div class="grid grid-cols-4 gap-2 text-sm font-mono">
+                                <button onclick="setInputValue(5)" class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-700 transition">+5</button>
+                                <button onclick="setInputValue(-5)" class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-700 transition">-5</button>
+                                <button onclick="setInputValue(-128)" class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-700 transition">-128</button>
+                                <button onclick="setInputValue(-1)" class="py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-700 transition">-1</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-slate-100 text-xs text-slate-500 space-y-2">
+                        <div class="flex justify-between">
+                            <span>Bit Width:</span>
+                            <span class="font-mono font-semibold text-slate-800">8 bits (1 Byte)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Signed Range:</span>
+                            <span class="font-mono font-semibold text-slate-800">-128 to +127</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Visual Comparison Cards -->
+                <div class="lg:col-span-8 space-y-6">
+                    <!-- 1. Sign-Magnitude Card -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                                <h4 class="text-md font-bold text-slate-900">Sign-Magnitude Representation</h4>
+                            </div>
+                            <span class="text-xs font-mono bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md">MSB = Sign | 7 Bits = Value</span>
+                        </div>
+
+                        <!-- Bit Display -->
+                        <div class="grid grid-cols-8 gap-1 sm:gap-2 mb-4 font-mono text-center">
+                            <template id="sm-bits-template"></template>
+                            <div id="sm-bit-display" class="contents">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Legend / Breakdown -->
+                        <div id="sm-breakdown" class="p-3 bg-slate-50 rounded-xl text-xs sm:text-sm text-slate-600 flex justify-between items-center">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- 2. Two's Complement Card -->
+                    <div class="bg-white p-6 rounded-2xl border border-indigo-100 shadow-md ring-1 ring-indigo-500/10">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-indigo-600"></span>
+                                <h4 class="text-md font-bold text-slate-900">Two's Complement Representation</h4>
+                            </div>
+                            <span class="text-xs font-mono bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md font-semibold">Standard for Computers</span>
+                        </div>
+
+                        <!-- Bit Display -->
+                        <div class="grid grid-cols-8 gap-1 sm:gap-2 mb-4 font-mono text-center">
+                            <div id="tc-bit-display" class="contents">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Two's Complement Derivation Steps (Shown for negative numbers) -->
+                        <div id="tc-derivation-box" class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ARITHMETIC VISUALIZER -->
+        <div id="section-arithmetic" class="space-y-8 hidden">
+            <!-- Header Controls & Input -->
+            <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                <h2 class="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-indigo-600"></i> Two's Complement Addition & Subtraction Walkthrough
+                </h2>
+                <p class="text-sm text-slate-600 mb-6">
+                    See how computers perform subtraction by negating the second operand (finding its Two's Complement) and simply adding them together!
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                    <!-- Operand A -->
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Operand A (Decimal)</label>
+                        <input type="number" id="opA" value="5" min="-128" max="127" 
+                            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-lg text-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <!-- Operation Selector -->
+                    <div class="md:col-span-2 flex justify-center">
+                        <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 w-full text-center">
+                            <button id="op-add-btn" onclick="setOperation('+')" class="flex-1 py-2 font-mono font-bold text-lg rounded-lg bg-white text-indigo-600 shadow-sm transition-all">+</button>
+                            <button id="op-sub-btn" onclick="setOperation('-')" class="flex-1 py-2 font-mono font-bold text-lg rounded-lg text-slate-600 hover:text-slate-900 transition-all">-</button>
+                        </div>
+                    </div>
+
+                    <!-- Operand B -->
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Operand B (Decimal)</label>
+                        <input type="number" id="opB" value="-3" min="-128" max="127" 
+                            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-lg text-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <!-- Calculate Button -->
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-transparent mb-1">Action</label>
+                        <button onclick="startArithmeticWalkthrough()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-md shadow-indigo-200 transition-all text-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i> Compute
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Walkthrough Interactive Stage -->
+            <div id="arithmetic-stage" class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                <!-- Top Controller & Progress -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pb-6 border-b border-slate-100">
+                    <div>
+                        <span id="step-indicator" class="text-xs font-bold tracking-wider uppercase text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">Step 1 of 3</span>
+                        <h3 id="step-title" class="text-lg font-bold text-slate-900 mt-2">Preparing Operands</h3>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button id="btn-prev-step" onclick="prevArithStep()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition disabled:opacity-40" disabled>
+                            <i class="fa-solid fa-arrow-left mr-1"></i> Prev Step
+                        </button>
+                        <button id="btn-next-step" onclick="nextArithStep()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
+                            Next Step <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                        <button id="btn-auto-play" onclick="toggleAutoPlay()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition" title="Auto Play">
+                            <i id="auto-play-icon" class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step Description Banner -->
+                <div id="step-explanation" class="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-sm leading-relaxed flex items-start gap-3">
+                    <i class="fa-solid fa-circle-info text-blue-600 text-lg mt-0.5"></i>
+                    <div>Converting numbers to 8-bit Two's Complement binary.</div>
+                </div>
+
+                <!-- Subtraction Transformation Callout (only shown during subtraction) -->
+                <div id="subtraction-transform-box" class="hidden p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-sm">
+                    <div class="font-bold flex items-center gap-2 mb-1">
+                        <i class="fa-solid fa-arrows-rotate text-amber-600"></i> Subtraction Transformation Rule:
+                    </div>
+                    <div class="font-mono text-base text-center py-2 font-bold bg-white rounded-lg border border-amber-200 text-slate-800">
+                        <span id="sub-rule-text">A - B  ===>  A + (-B)</span>
+                    </div>
+                    <p class="text-xs text-amber-800 mt-2">
+                        Computers do not have a separate binary subtraction circuit! Instead, to calculate <code class="font-bold">A - B</code>, the system negates <code class="font-bold">B</code> into <code class="font-bold">-B</code> using Two's Complement (Flip bits + 1) and adds it to <code class="font-bold">A</code>.
+                    </p>
+                </div>
+
+                <!-- Binary Addition Column Layout Grid -->
+                <div class="overflow-x-auto py-4">
+                    <div class="min-w-[500px] flex flex-col items-center justify-center font-mono">
+                        <!-- Binary Table -->
+                        <div class="grid grid-cols-10 gap-1 sm:gap-2 text-center text-base sm:text-lg font-bold">
+                            <!-- Header labels for bits -->
+                            <div class="text-xs font-sans text-slate-400 font-semibold uppercase flex items-center justify-end pr-2">Bit Pos</div>
+                            <div class="text-xs font-sans text-slate-400 font-semibold">C</div>
+                            <div class="text-xs font-sans text-slate-400 font-semibold">7 (MSB)</div>
+                            <div class="text-xs font-sans text-slate-400 font-semibold">6</div>
+                            <div class="text-xs font-sans text-slate-400 font-semibold">5</div>
+                            <div class="text-xs font-sans text-slate-400 font-semibold">4</div>
+                            <div class="text-xs font-sans text-slate-400 font-semibold">3</div>
+                            <div class="text-xs font-sans text-slate-400 font-semibold">2</div>
+                            <div class="text-xs font-sans text-slate-400 font-semibold">1</div>
+                            <div class="text-xs font-sans text-slate-400 font-semibold">0 (LSB)</div>
+
+                            <!-- Row 1: Carry Bits -->
+                            <div class="text-xs font-sans text-amber-600 flex items-center justify-end pr-2 font-bold">Carries</div>
+                            <div id="carry-out" class="w-9 h-9 rounded-lg border border-transparent text-slate-300 flex items-center justify-center text-xs">0</div>
+                            <div id="carry-7" class="w-9 h-9 rounded-lg border border-slate-200 bg-amber-50 text-amber-700 flex items-center justify-center text-sm">0</div>
+                            <div id="carry-6" class="w-9 h-9 rounded-lg border border-slate-200 bg-amber-50 text-amber-700 flex items-center justify-center text-sm">0</div>
+                            <div id="carry-5" class="w-9 h-9 rounded-lg border border-slate-200 bg-amber-50 text-amber-700 flex items-center justify-center text-sm">0</div>
+                            <div id="carry-4" class="w-9 h-9 rounded-lg border border-slate-200 bg-amber-50 text-amber-700 flex items-center justify-center text-sm">0</div>
+                            <div id="carry-3" class="w-9 h-9 rounded-lg border border-slate-200 bg-amber-50 text-amber-700 flex items-center justify-center text-sm">0</div>
+                            <div id="carry-2" class="w-9 h-9 rounded-lg border border-slate-200 bg-amber-50 text-amber-700 flex items-center justify-center text-sm">0</div>
+                            <div id="carry-1" class="w-9 h-9 rounded-lg border border-slate-200 bg-amber-50 text-amber-700 flex items-center justify-center text-sm">0</div>
+                            <div id="carry-0" class="w-9 h-9 rounded-lg border border-slate-200 bg-amber-50 text-amber-700 flex items-center justify-center text-sm">0</div>
+
+                            <!-- Row 2: Operand A -->
+                            <div id="label-opA" class="text-xs font-sans text-slate-600 flex items-center justify-end pr-2 font-bold">A (+5)</div>
+                            <div class="w-9 h-9 flex items-center justify-center text-slate-300"></div>
+                            <div id="bitA-7" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">0</div>
+                            <div id="bitA-6" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">0</div>
+                            <div id="bitA-5" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">0</div>
+                            <div id="bitA-4" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">0</div>
+                            <div id="bitA-3" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">0</div>
+                            <div id="bitA-2" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">1</div>
+                            <div id="bitA-1" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">0</div>
+                            <div id="bitA-0" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">1</div>
+
+                            <!-- Row 3: Operand B (or -B) -->
+                            <div id="label-opB" class="text-xs font-sans text-indigo-600 flex items-center justify-end pr-2 font-bold">+ B (-3)</div>
+                            <div class="w-9 h-9 flex items-center justify-center text-slate-300"></div>
+                            <div id="bitB-7" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">1</div>
+                            <div id="bitB-6" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">1</div>
+                            <div id="bitB-5" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">1</div>
+                            <div id="bitB-4" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">1</div>
+                            <div id="bitB-3" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">1</div>
+                            <div id="bitB-2" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">1</div>
+                            <div id="bitB-1" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">0</div>
+                            <div id="bitB-0" class="w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center">1</div>
+
+                            <!-- Separator Line -->
+                            <div class="col-span-10 border-b-2 border-slate-800 my-1"></div>
+
+                            <!-- Row 4: Result Bits -->
+                            <div class="text-xs font-sans text-emerald-600 flex items-center justify-end pr-2 font-bold">Sum =</div>
+                            <div id="sum-carry-out" class="w-9 h-9 rounded-lg border border-dashed border-red-300 bg-red-50 text-red-600 flex items-center justify-center text-xs font-bold" title="Discarded Carry Bit">1</div>
+                            <div id="sum-7" class="w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center">0</div>
+                            <div id="sum-6" class="w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center">0</div>
+                            <div id="sum-5" class="w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center">0</div>
+                            <div id="sum-4" class="w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center">0</div>
+                            <div id="sum-3" class="w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center">0</div>
+                            <div id="sum-2" class="w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center">0</div>
+                            <div id="sum-1" class="w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center">1</div>
+                            <div id="sum-0" class="w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 flex items-center justify-center">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Special Edge Cases & Analysis Panel -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                    <!-- Discarded Carry Out Callout -->
+                    <div id="box-carry-out-info" class="p-4 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm">
+                        <h4 class="font-bold text-slate-900 flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-trash-can text-slate-500"></i> Carry Out of MSB
+                        </h4>
+                        <p id="carry-out-text" class="text-slate-600">
+                            When adding 8-bit numbers, any 9th carry bit overflowing past Bit 7 is <strong>discarded</strong>.
+                        </p>
+                    </div>
+
+                    <!-- Overflow Detection Callout -->
+                    <div id="box-overflow-info" class="p-4 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm">
+                        <h4 class="font-bold text-slate-900 flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-shield-halved text-indigo-600"></i> Overflow Flag Status
+                        </h4>
+                        <p id="overflow-text" class="text-slate-600">
+                            Overflow occurs only if adding two positive numbers yields a negative result, or adding two negatives yields a positive.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: PRACTICE QUIZ -->
+        <div id="section-quiz" class="space-y-8 hidden">
+            <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">Challenge Mode</span>
+                        <h2 class="text-xl font-bold text-slate-900 mt-1">Test Your Binary Knowledge</h2>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400 block font-semibold uppercase">Score</span>
+                        <span id="quiz-score" class="font-mono text-xl font-bold text-indigo-600">0 / 0</span>
+                    </div>
+                </div>
+
+                <!-- Quiz Card Container -->
+                <div id="quiz-card" class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <span id="quiz-question-number" class="text-xs font-semibold text-slate-500 uppercase">Question 1 of 5</span>
+                        <span id="quiz-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600">Two's Complement</span>
+                    </div>
+
+                    <h3 id="quiz-question-text" class="text-lg font-bold text-slate-800">
+                        Convert the decimal number -14 into an 8-bit Two's Complement binary number.
+                    </h3>
+
+                    <!-- Quiz Options List -->
+                    <div id="quiz-options" class="space-y-3 pt-2">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- Instant Feedback Box -->
+                    <div id="quiz-feedback" class="hidden p-4 rounded-xl text-sm leading-relaxed border">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- Next Question Action -->
+                    <div class="pt-4 flex justify-end">
+                        <button id="btn-next-question" onclick="nextQuizQuestion()" class="hidden px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm shadow-md transition">
+                            Next Question <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            Interactive Computer Science Learning Tool &bull; Designed for 16-Year-Old High School & A-Level CS Students
+        </div>
+    </footer>
+
+    <script>
+        // --- GLOBAL STATE ---
+        let currentTab = 'converter';
+        let arithStep = 0;
+        let autoPlayInterval = null;
+        let arithmeticState = {
+            opA: 5,
+            opB: -3,
+            operation: '+', // '+' or '-'
+            effectiveB: -3,
+            binA: [],
+            binB: [],
+            carries: [],
+            sum: [],
+            carryOut: 0,
+            hasOverflow: false,
+            maxSteps: 10
+        };
+
+        // --- TAB NAVIGATION ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-indigo-700', 'shadow-sm', 'font-semibold');
+                btn.classList.add('text-slate-600');
+            });
+            
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('bg-white', 'text-indigo-700', 'shadow-sm', 'font-semibold');
+            activeBtn.classList.remove('text-slate-600');
+
+            document.getElementById('section-converter').classList.add('hidden');
+            document.getElementById('section-arithmetic').classList.add('hidden');
+            document.getElementById('section-quiz').classList.add('hidden');
+
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+
+            if (tabId === 'arithmetic') {
+                startArithmeticWalkthrough();
+            }
+        }
+
+        // --- HELPER FUNCTIONS FOR BINARY MATH ---
+        // Converts positive integer (0-127) to 8-bit array [MSB ... LSB]
+        function decToUnsigned8Bit(num) {
+            let n = Math.abs(num);
+            let bits = [];
+            for (let i = 7; i >= 0; i--) {
+                bits.push((n >> i) & 1);
+            }
+            return bits;
+        }
+
+        // Inverts binary array (bit flipping)
+        function flipBits(bitArray) {
+            return bitArray.map(b => b === 1 ? 0 : 1);
+        }
+
+        // Adds 1 to an 8-bit binary array
+        function addOneToBinary(bitArray) {
+            let res = [...bitArray];
+            let carry = 1;
+            for (let i = 7; i >= 0; i--) {
+                let sum = res[i] + carry;
+                res[i] = sum % 2;
+                carry = Math.floor(sum / 2);
+            }
+            return res;
+        }
+
+        // Returns 8-bit Two's Complement array for integer (-128 to 127)
+        function decToTwosComplement(num) {
+            if (num >= 0) {
+                return decToUnsigned8Bit(num);
+            } else {
+                let positiveBits = decToUnsigned8Bit(Math.abs(num));
+                let inverted = flipBits(positiveBits);
+                return addOneToBinary(inverted);
+            }
+        }
+
+        // Returns Sign-Magnitude representation array for integer (-127 to 127)
+        function decToSignMagnitude(num) {
+            let magBits = decToUnsigned8Bit(Math.abs(num));
+            // Set MSB to sign (1 for negative, 0 for positive)
+            magBits[0] = num < 0 ? 1 : 0;
+            return magBits;
+        }
+
+        // Convert binary array to signed Two's Complement decimal
+        function twosComplementToDec(bits) {
+            let val = -bits[0] * 128;
+            for (let i = 1; i < 8; i++) {
+                val += bits[i] * Math.pow(2, 7 - i);
+            }
+            return val;
+        }
+
+        const integerInput = document.getElementById('integerInput');
+
+        integerInput.addEventListener('input', updateConverter);
+
+        function setInputValue(val) {
+            integerInput.value = val;
+            updateConverter();
+        }
+
+        function randomizeInput() {
+            const rand = Math.floor(Math.random() * 256) - 128; // -128 to 127
+            integerInput.value = rand;
+            updateConverter();
+        }
+
+        function updateConverter() {
+            let num = parseInt(integerInput.value, 10);
+            if (isNaN(num)) num = 0;
+            if (num > 127) num = 127;
+            if (num < -128) num = -128;
+
+            // 1. Sign-Magnitude Render
+            const smDisplay = document.getElementById('sm-bit-display');
+            const smBreakdown = document.getElementById('sm-breakdown');
+            
+            if (num < -127) {
+                // Out of range for 8-bit Sign Magnitude (-127 to +127)
+                smDisplay.innerHTML = `<div class="col-span-8 p-3 text-red-500 font-semibold text-sm">Sign-Magnitude cannot represent -128 in 8 bits!</div>`;
+                smBreakdown.innerHTML = `<span class="text-red-600 font-medium">Overflow / Underflow: Range is limited to -127 to +127.</span>`;
+            } else {
+                const smBits = decToSignMagnitude(num);
+                let html = '';
+                const weights = [128, 64, 32, 16, 8, 4, 2, 1];
+                
+                smBits.forEach((bit, idx) => {
+                    const isSignBit = idx === 0;
+                    const bgClass = isSignBit 
+                        ? (bit === 1 ? 'bg-red-100 border-red-300 text-red-700' : 'bg-emerald-100 border-emerald-300 text-emerald-700')
+                        : 'bg-slate-100 border-slate-200 text-slate-800';
+                    
+                    html += `
+                        <div class="bit-box flex flex-col items-center">
+                            <span class="text-[10px] text-slate-400 font-sans mb-1">${isSignBit ? 'SIGN' : weights[idx]}</span>
+                            <div class="w-full py-2.5 rounded-xl border text-base font-bold ${bgClass}">${bit}</div>
+                        </div>
+                    `;
+                });
+                smDisplay.innerHTML = html;
+
+                const absVal = Math.abs(num);
+                smBreakdown.innerHTML = `
+                    <div>
+                        <span class="font-bold text-slate-800">Sign Bit:</span> 
+                        <span class="${smBits[0] === 1 ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}">${smBits[0]} (${num < 0 ? 'Negative' : 'Positive'})</span>
+                    </div>
+                    <div>
+                        <span class="font-bold text-slate-800">Magnitude:</span> 
+                        <span class="font-mono text-slate-700">${smBits.slice(1).join('')} = |${absVal}|</span>
+                    </div>
+                `;
+            }
+
+            // 2. Two's Complement Render
+            const tcBits = decToTwosComplement(num);
+            const tcDisplay = document.getElementById('tc-bit-display');
+            const tcDerivationBox = document.getElementById('tc-derivation-box');
+
+            let tcHtml = '';
+            const weights = [-128, 64, 32, 16, 8, 4, 2, 1];
+
+            tcBits.forEach((bit, idx) => {
+                const isMSB = idx === 0;
+                const bgClass = isMSB && num < 0
+                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700 font-bold'
+                    : 'bg-slate-100 border-slate-200 text-slate-800';
+
+                tcHtml += `
+                    <div class="bit-box flex flex-col items-center">
+                        <span class="text-[10px] text-slate-400 font-sans mb-1">${weights[idx]}</span>
+                        <div class="w-full py-2.5 rounded-xl border text-base font-bold ${bgClass}">${bit}</div>
+                    </div>
+                `;
+            });
+            tcDisplay.innerHTML = tcHtml;
+
+            // Explanation / Step-by-step conversion card
+            if (num >= 0) {
+                tcDerivationBox.innerHTML = `
+                    <div class="text-xs sm:text-sm text-slate-700">
+                        <span class="font-bold text-emerald-600"><i class="fa-solid fa-circle-check mr-1"></i> Positive Number:</span>
+                        For non-negative integers (<code class="font-mono bg-slate-200 px-1 rounded">${num} &ge; 0</code>), Two's Complement is identical to standard unsigned binary representation.
+                    </div>
+                `;
+            } else {
+                const posBits = decToUnsigned8Bit(Math.abs(num));
+                const invertedBits = flipBits(posBits);
+
+                tcDerivationBox.innerHTML = `
+                    <h5 class="font-bold text-xs uppercase tracking-wider text-indigo-700 mb-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-gears"></i> Step-by-Step Conversion for Negative Number (${num})
+                    </h5>
+                    <div class="space-y-2 text-xs sm:text-sm font-mono">
+                        <div class="flex justify-between items-center p-2 rounded bg-white border border-slate-200">
+                            <span class="font-sans text-slate-600">1. Positive Base (+${Math.abs(num)}):</span>
+                            <span class="font-bold tracking-widest text-slate-800">${posBits.join('')}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-amber-50 border border-amber-200 text-amber-900">
+                            <span class="font-sans text-amber-800">2. Invert All Bits (NOT / 1's Comp):</span>
+                            <span class="font-bold tracking-widest">${invertedBits.join('')}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-emerald-50 border border-emerald-200 text-emerald-900">
+                            <span class="font-sans text-emerald-800">3. Add 1 (Two's Complement):</span>
+                            <span class="font-bold tracking-widest text-emerald-700">${tcBits.join('')}</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function setOperation(op) {
+            arithmeticState.operation = op;
+            const addBtn = document.getElementById('op-add-btn');
+            const subBtn = document.getElementById('op-sub-btn');
+
+            if (op === '+') {
+                addBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                addBtn.classList.remove('text-slate-600');
+                subBtn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                subBtn.classList.add('text-slate-600');
+            } else {
+                subBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                subBtn.classList.remove('text-slate-600');
+                addBtn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                addBtn.classList.add('text-slate-600');
+            }
+            startArithmeticWalkthrough();
+        }
+
+        function startArithmeticWalkthrough() {
+            clearInterval(autoPlayInterval);
+            document.getElementById('auto-play-icon').className = 'fa-solid fa-play';
+
+            const a = parseInt(document.getElementById('opA').value, 10) || 0;
+            const b = parseInt(document.getElementById('opB').value, 10) || 0;
+
+            arithmeticState.opA = Math.max(-128, Math.min(127, a));
+            arithmeticState.opB = Math.max(-128, Math.min(127, b));
+            
+            // If subtraction, effective B is negated (-B)
+            arithmeticState.effectiveB = arithmeticState.operation === '-' ? -arithmeticState.opB : arithmeticState.opB;
+
+            arithmeticState.binA = decToTwosComplement(arithmeticState.opA);
+            arithmeticState.binB = decToTwosComplement(arithmeticState.effectiveB);
+
+            // Calculate bitwise addition step-by-step from LSB to MSB (index 7 down to 0)
+            let carries = new Array(8).fill(0);
+            let sum = new Array(8).fill(0);
+            let currentCarry = 0;
+
+            for (let i = 7; i >= 0; i--) {
+                carries[i] = currentCarry;
+                let s = arithmeticState.binA[i] + arithmeticState.binB[i] + currentCarry;
+                sum[i] = s % 2;
+                currentCarry = Math.floor(s / 2);
+            }
+
+            arithmeticState.carries = carries;
+            arithmeticState.sum = sum;
+            arithmeticState.carryOut = currentCarry;
+
+            // Overflow detection rule for Two's Complement:
+            // Occurs if sign of A and sign of B are same, but sign of Sum is different.
+            const signA = arithmeticState.binA[0];
+            const signB = arithmeticState.binB[0];
+            const signSum = sum[0];
+            arithmeticState.hasOverflow = (signA === signB) && (signA !== signSum);
+
+            arithStep = 0;
+            renderArithStep();
+        }
+
+        function renderArithStep() {
+            const { opA, opB, operation, effectiveB, binA, binB, carries, sum, carryOut, hasOverflow } = arithmeticState;
+            
+            const prevBtn = document.getElementById('btn-prev-step');
+            const nextBtn = document.getElementById('btn-next-step');
+            const stepIndicator = document.getElementById('step-indicator');
+            const stepTitle = document.getElementById('step-title');
+            const stepExplanation = document.getElementById('step-explanation');
+            const subBox = document.getElementById('subtraction-transform-box');
+
+            // Total Steps: 0 (Init/Convert), 1..8 (Bit additions), 9 (Final Result & Overflow Check)
+            const maxStep = 9;
+
+            prevBtn.disabled = arithStep === 0;
+            nextBtn.disabled = arithStep === maxStep;
+
+            stepIndicator.innerText = `Step ${arithStep + 1} of ${maxStep + 1}`;
+
+            // Labels update
+            document.getElementById('label-opA').innerText = `A (${opA >= 0 ? '+' + opA : opA})`;
+            if (operation === '-') {
+                document.getElementById('label-opB').innerText = `+ (-B) (${effectiveB >= 0 ? '+' + effectiveB : effectiveB})`;
+            } else {
+                document.getElementById('label-opB').innerText = `+ B (${opB >= 0 ? '+' + opB : opB})`;
+            }
+
+            // Subtraction info box visibility
+            if (operation === '-') {
+                subBox.classList.remove('hidden');
+                document.getElementById('sub-rule-text').innerText = `${opA} - (${opB})   ===>   ${opA} + (${effectiveB})`;
+            } else {
+                subBox.classList.add('hidden');
+            }
+
+            // Clear all highlights
+            for (let i = 0; i < 8; i++) {
+                document.getElementById(`bitA-${i}`).className = 'w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center';
+                document.getElementById(`bitB-${i}`).className = 'w-9 h-9 rounded-lg border border-slate-300 bg-slate-100 flex items-center justify-center';
+                document.getElementById(`carry-${i}`).className = 'w-9 h-9 rounded-lg border border-slate-200 bg-amber-50 text-amber-700 flex items-center justify-center text-sm';
+                document.getElementById(`sum-${i}`).className = 'w-9 h-9 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 flex items-center justify-center';
+                
+                // Set default values up to step
+                document.getElementById(`bitA-${i}`).innerText = binA[i];
+                document.getElementById(`bitB-${i}`).innerText = binB[i];
+                document.getElementById(`carry-${i}`).innerText = carries[i];
+                document.getElementById(`sum-${i}`).innerText = sum[i];
+            }
+            document.getElementById('sum-carry-out').innerText = carryOut;
+
+            // Render according to step
+            if (arithStep === 0) {
+                stepTitle.innerText = "1. Setup & Two's Complement Conversion";
+                stepExplanation.innerHTML = `<i class="fa-solid fa-circle-info text-blue-600 text-lg mt-0.5"></i> <div>Convert both numbers into 8-bit Two's Complement binary. ${operation === '-' ? 'Notice how subtraction <code class="font-bold">A - B</code> is transformed into <code class="font-bold">A + (-B)</code>.' : ''}</div>`;
+
+                // Hide carries & sums initially
+                for (let i = 0; i < 8; i++) {
+                    document.getElementById(`carry-${i}`).innerText = '-';
+                    document.getElementById(`sum-${i}`).innerText = '-';
+                }
+                document.getElementById('sum-carry-out').innerText = '-';
+
+            } else if (arithStep >= 1 && arithStep <= 8) {
+                const bitPos = 8 - arithStep; // 7 down to 0
+                stepTitle.innerText = `2. Adding Bit Position ${bitPos} (2^${bitPos} = ${Math.pow(2, bitPos)})`;
+
+                // Highlight active column
+                document.getElementById(`bitA-${bitPos}`).className = 'w-9 h-9 rounded-lg border-2 border-indigo-600 bg-indigo-100 text-indigo-900 font-bold flex items-center justify-center scale-110 shadow-sm';
+                document.getElementById(`bitB-${bitPos}`).className = 'w-9 h-9 rounded-lg border-2 border-indigo-600 bg-indigo-100 text-indigo-900 font-bold flex items-center justify-center scale-110 shadow-sm';
+                document.getElementById(`carry-${bitPos}`).className = 'w-9 h-9 rounded-lg border-2 border-amber-500 bg-amber-200 text-amber-900 font-bold flex items-center justify-center scale-110 shadow-sm';
+                document.getElementById(`sum-${bitPos}`).className = 'w-9 h-9 rounded-lg border-2 border-emerald-500 bg-emerald-200 text-emerald-900 font-bold flex items-center justify-center scale-110 shadow-sm';
+
+                // Display calculations for previous and current bits
+                for (let i = 0; i < 8; i++) {
+                    const pos = i;
+                    if (pos > bitPos) {
+                        // Already computed
+                        document.getElementById(`sum-${pos}`).className = 'w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-800 font-bold flex items-center justify-center';
+                    } else if (pos < bitPos) {
+                        // Not yet computed
+                        document.getElementById(`carry-${pos}`).innerText = '-';
+                        document.getElementById(`sum-${pos}`).innerText = '-';
+                    }
+                }
+                document.getElementById('sum-carry-out').innerText = '-';
+
+                const cIn = carries[bitPos];
+                const aBit = binA[bitPos];
+                const bBit = binB[bitPos];
+                const total = aBit + bBit + cIn;
+                const sBit = sum[bitPos];
+                const nextCarry = Math.floor(total / 2);
+
+                stepExplanation.innerHTML = `
+                    <i class="fa-solid fa-calculator text-indigo-600 text-lg mt-0.5"></i>
+                    <div>
+                        <strong>Column Calculation:</strong> Carry In (${cIn}) + Bit A (${aBit}) + Bit B (${bBit}) = <strong>${total}</strong> in decimal.<br>
+                        &bull; <strong>Sum bit</strong> = <code class="font-bold bg-white px-1 rounded">${total} % 2 = ${sBit}</code><br>
+                        &bull; <strong>Carry to next bit</strong> = <code class="font-bold bg-white px-1 rounded">${total} &ge; 2 ? ${nextCarry} : 0</code>
+                    </div>
+                `;
+            } else if (arithStep === 9) {
+                stepTitle.innerText = "3. Final Result & Edge Case Verification";
+
+                for (let i = 0; i < 8; i++) {
+                    document.getElementById(`sum-${i}`).className = 'w-9 h-9 rounded-lg border border-emerald-500 bg-emerald-100 text-emerald-900 font-bold flex items-center justify-center';
+                }
+
+                const rawExpected = opA + effectiveB;
+                const actualVal = twosComplementToDec(sum);
+
+                let explainHTML = `<div class="space-y-2">`;
+                explainHTML += `<div><strong>Binary Result:</strong> <code class="font-mono bg-white px-2 py-0.5 rounded border border-blue-200 text-slate-800 font-bold">${sum.join('')}</code> = <strong>${actualVal}</strong> in decimal.</div>`;
+
+                if (hasOverflow) {
+                    explainHTML += `<div class="text-red-700 font-bold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation"></i> OVERFLOW DETECTED! Expected ${rawExpected}, but 8-bit range (-128 to 127) was exceeded.</div>`;
+                } else {
+                    explainHTML += `<div class="text-emerald-700 font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Calculation Successful! No arithmetic overflow occurred.</div>`;
+                }
+                explainHTML += `</div>`;
+
+                stepExplanation.innerHTML = explainHTML;
+            }
+
+            // Update Overflow and Carry-Out side info boxes
+            const carryOutBox = document.getElementById('box-carry-out-info');
+            const carryOutText = document.getElementById('carry-out-text');
+
+            if (carryOut === 1) {
+                carryOutBox.className = 'p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 text-xs sm:text-sm';
+                carryOutText.innerHTML = `<strong>MSB Carry-Out = 1:</strong> In Two's Complement, the 9th carry out bit is <em>completely ignored/discarded</em>. It does NOT indicate an overflow on its own!`;
+            } else {
+                carryOutBox.className = 'p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-xs sm:text-sm';
+                carryOutText.innerHTML = `<strong>MSB Carry-Out = 0:</strong> No extra 9th bit produced.`;
+            }
+
+            const overflowBox = document.getElementById('box-overflow-info');
+            const overflowText = document.getElementById('overflow-text');
+
+            if (hasOverflow) {
+                overflowBox.className = 'p-4 rounded-xl border border-red-300 bg-red-50 text-red-900 text-xs sm:text-sm';
+                overflowText.innerHTML = `<strong class="text-red-700"><i class="fa-solid fa-triangle-exclamation"></i> OVERFLOW OCCURRED:</strong> Adding two numbers of the same sign produced an opposite sign result! (The true result exceeds 8-bit storage).`;
+            } else {
+                overflowBox.className = 'p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs sm:text-sm';
+                overflowText.innerHTML = `<strong class="text-emerald-700"><i class="fa-solid fa-check"></i> NO OVERFLOW:</strong> The result fits validly within the 8-bit signed integer range (-128 to +127).`;
+            }
+        }
+
+        function nextArithStep() {
+            if (arithStep < 9) {
+                arithStep++;
+                renderArithStep();
+            }
+        }
+
+        function prevArithStep() {
+            if (arithStep > 0) {
+                arithStep--;
+                renderArithStep();
+            }
+        }
+
+        function toggleAutoPlay() {
+            const icon = document.getElementById('auto-play-icon');
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+                icon.className = 'fa-solid fa-play';
+            } else {
+                icon.className = 'fa-solid fa-pause';
+                autoPlayInterval = setInterval(() => {
+                    if (arithStep < 9) {
+                        arithStep++;
+                        renderArithStep();
+                    } else {
+                        clearInterval(autoPlayInterval);
+                        autoPlayInterval = null;
+                        icon.className = 'fa-solid fa-play';
+                    }
+                }, 1500);
+            }
+        }
+
+        const quizQuestions = [
+            {
+                question: "What is the 8-bit Two's Complement representation of the decimal number -5?",
+                badge: "Conversion",
+                options: ["10000101", "11111011", "11111010", "00000101"],
+                correct: 1,
+                explanation: "1) Positive +5 is 00000101. 2) Invert bits (1's comp): 11111010. 3) Add 1: 11111011."
+            },
+            {
+                question: "Why do modern computer CPU arithmetic logic units (ALUs) prefer Two's Complement over Sign-Magnitude?",
+                badge: "Concept",
+                options: [
+                    "Sign-magnitude requires more memory bits.",
+                    "Two's complement allows subtraction to be performed using addition circuits with a single zero.",
+                    "Sign-magnitude cannot represent positive numbers.",
+                    "Two's complement is faster for decimal printing."
+                ],
+                correct: 1,
+                explanation: "Two's Complement eliminates negative zero (-0) and allows the CPU to use standard binary addition hardware for both addition and subtraction."
+            },
+            {
+                question: "In 8-bit Two's Complement arithmetic, what happens if an addition produces a carry out of the MSB (9th bit)?",
+                badge: "Arithmetic",
+                options: [
+                    "It causes an automatic system crash.",
+                    "It is added back into the LSB (end-around carry).",
+                    "It is safely discarded.",
+                    "It always sets the overflow flag."
+                ],
+                correct: 2,
+                explanation: "In Two's Complement, carry out beyond the fixed bit length (MSB carry) is discarded."
+            },
+            {
+                question: "Which of the following operations will cause an Arithmetic Overflow in an 8-bit signed system?",
+                badge: "Overflow",
+                options: [
+                    "(+100) + (+50)",
+                    "(-50) + (+30)",
+                    "(+50) + (-30)",
+                    "(-20) + (-30)"
+                ],
+                correct: 0,
+                explanation: "+100 + +50 = +150, which exceeds the maximum positive 8-bit signed value (+127). The result will wrap around to a negative number!"
+            },
+            {
+                question: "How is the subtraction A - B calculated inside a binary processor?",
+                badge: "Hardware Logic",
+                options: [
+                    "By directly subtracting each bit column with borrow bits.",
+                    "By converting B to Sign-Magnitude and multiplying.",
+                    "By finding the Two's Complement of B (-B) and adding it to A: A + (-B).",
+                    "By shifting all bits to the left."
+                ],
+                correct: 2,
+                explanation: "Computers execute A - B as A + (-B). Negative B is created by flipping bits of B and adding 1."
+            }
+        ];
+
+        let currentQuestionIdx = 0;
+        let score = 0;
+        let selectedOption = null;
+
+        function renderQuizQuestion() {
+            const q = quizQuestions[currentQuestionIdx];
+            document.getElementById('quiz-question-number').innerText = `Question ${currentQuestionIdx + 1} of ${quizQuestions.length}`;
+            document.getElementById('quiz-badge').innerText = q.badge;
+            document.getElementById('quiz-question-text').innerText = q.question;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            selectedOption = null;
+            document.getElementById('quiz-feedback').className = 'hidden p-4 rounded-xl text-sm leading-relaxed border';
+            document.getElementById('btn-next-question').classList.add('hidden');
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-4 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition flex items-center justify-between group text-slate-700 font-medium text-sm`;
+                btn.onclick = () => selectQuizAnswer(idx);
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white text-slate-500 font-mono text-xs font-bold flex items-center justify-center transition">
+                            ${String.fromCharCode(65 + idx)}
+                        </span>
+                        <span>${opt}</span>
+                    </div>
+                    <i class="fa-regular fa-circle text-slate-300 group-hover:text-indigo-500"></i>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectQuizAnswer(optionIdx) {
+            if (selectedOption !== null) return; // Prevent double answer
+            selectedOption = optionIdx;
+
+            const q = quizQuestions[currentQuestionIdx];
+            const isCorrect = optionIdx === q.correct;
+            
+            if (isCorrect) score++;
+
+            document.getElementById('quiz-score').innerText = `${score} / ${quizQuestions.length}`;
+
+            // Update UI option buttons styling
+            const optionBtns = document.getElementById('quiz-options').children;
+            for (let i = 0; i < optionBtns.length; i++) {
+                const btn = optionBtns[i];
+                btn.disabled = true;
+                if (i === q.correct) {
+                    btn.className = `w-full text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-emerald-900 font-medium text-sm flex items-center justify-between`;
+                } else if (i === optionIdx && !isCorrect) {
+                    btn.className = `w-full text-left p-4 rounded-xl border-2 border-red-500 bg-red-50 text-red-900 font-medium text-sm flex items-center justify-between`;
+                } else {
+                    btn.className = `w-full text-left p-4 rounded-xl border border-slate-200 opacity-50 text-slate-600 font-medium text-sm flex items-center justify-between`;
+                }
+            }
+
+            // Show feedback card
+            const feedbackBox = document.getElementById('quiz-feedback');
+            feedbackBox.classList.remove('hidden');
+            if (isCorrect) {
+                feedbackBox.className = 'p-4 rounded-xl text-sm leading-relaxed bg-emerald-50 border border-emerald-200 text-emerald-900';
+                feedbackBox.innerHTML = `
+                    <div class="font-bold flex items-center gap-2 mb-1"><i class="fa-solid fa-circle-check text-emerald-600"></i> Correct!</div>
+                    <div>${q.explanation}</div>
+                `;
+            } else {
+                feedbackBox.className = 'p-4 rounded-xl text-sm leading-relaxed bg-red-50 border border-red-200 text-red-900';
+                feedbackBox.innerHTML = `
+                    <div class="font-bold flex items-center gap-2 mb-1"><i class="fa-solid fa-circle-xmark text-red-600"></i> Incorrect</div>
+                    <div>${q.explanation}</div>
+                `;
+            }
+
+            document.getElementById('btn-next-question').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            if (currentQuestionIdx < quizQuestions.length - 1) {
+                currentQuestionIdx++;
+                renderQuizQuestion();
+            } else {
+                // Quiz Finish state
+                const card = document.getElementById('quiz-card');
+                card.innerHTML = `
+                    <div class="text-center py-8 space-y-4">
+                        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900">Quiz Completed!</h3>
+                        <p class="text-slate-600 text-base">You scored <strong>${score} out of ${quizQuestions.length}</strong>.</p>
+                        <button onclick="resetQuiz()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition">
+                            <i class="fa-solid fa-rotate-right mr-1.5"></i> Try Again
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function resetQuiz() {
+            score = 0;
+            currentQuestionIdx = 0;
+            document.getElementById('quiz-score').innerText = `0 / ${quizQuestions.length}`;
+            renderQuizQuestion();
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            updateConverter();
+            startArithmeticWalkthrough();
+            renderQuizQuestion();
+        };
+    </script>
+</body>
+</html>
